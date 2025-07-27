@@ -5,6 +5,7 @@ node_modules/
 
 # Expo
 .expo/
+.expo-shared/
 dist/
 web-build/
 expo-env.d.ts
@@ -21,17 +22,32 @@ expo-env.d.ts
 # Metro
 .metro-health-check*
 
+# Firebase
+firebase-debug.log
+
 # debug
 npm-debug.*
 yarn-debug.*
 yarn-error.*
+*.log
 
 # macOS
 .DS_Store
 *.pem
+
+# Editor settings
+.vscode/
+.idea/
 
 # local env files
 .env*.local
 
 # typescript
 *.tsbuildinfo
+
+# Watchman
+.watchmanconfig
+
+# Misc
+*.swp
+*.swo

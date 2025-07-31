@@ -5,11 +5,11 @@ import { db } from '../firebase';
 
 export default function AgregarJugadorScreen({ navigation }) {
   const [nombre, setNombre] = useState('');
-  const [nivel, setNivel] = useState('');
-  const [puntos, setPuntos] = useState('');
+  const [grupo, setGrupo] = useState('');
+  
 
   const guardarJugador = async () => {
-    if (!nombre || !nivel || !puntos) {
+    if (!nombre || !grupo) {
       Alert.alert("Campos obligatorios", "Por favor completa todos los campos.");
       return;
     }
@@ -17,13 +17,12 @@ export default function AgregarJugadorScreen({ navigation }) {
     try {
       await addDoc(collection(db, "jugadores"), {
         nombre: nombre.trim(),
-        nivel: nivel.trim(),
-        puntos: parseInt(puntos)
+        grupo: grupo.trim(),
+        
       });
       Alert.alert("Éxito", "Jugador agregado correctamente.");
       setNombre('');
-      setNivel('');
-      setPuntos('');
+      setGrupo('');
       navigation.goBack(); // vuelve a la pantalla anterior (opcional)
     } catch (error) {
       console.error("Error al agregar jugador:", error);
@@ -43,18 +42,11 @@ export default function AgregarJugadorScreen({ navigation }) {
       />
       <TextInput
         style={styles.input}
-        placeholder="Nivel (ej: Intermedio)"
-        value={nivel}
-        onChangeText={setNivel}
+        placeholder="Grupo"
+        value={grupo}
+        onChangeText={setGrupo}
       />
-      <TextInput
-        style={styles.input}
-        placeholder="Puntos"
-        value={puntos}
-        onChangeText={setPuntos}
-        keyboardType="numeric"
-      />
-
+      
       <Button title="Guardar Jugador" onPress={guardarJugador} />
     </View>
   );

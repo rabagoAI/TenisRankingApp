@@ -1,27 +1,33 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, Button } from 'react-native';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { View, Text, StyleSheet, ActivityIndicator, ScrollView, Button } from 'react-native';
+import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useFocusEffect } from '@react-navigation/native';
 
 export default function RankingScreen({ navigation }) {
-    const [jugadores, setJugadores] = useState([]);
+    const [jugadoresPorGrupo, setJugadoresPorGrupo] = useState({});
     const [loading, setLoading] = useState(true);
 
     useFocusEffect(
         React.useCallback(() => {
-            setLoading(true);
             const cargarJugadores = async () => {
                 try {
-                    const q = query(collection(db, "jugadores"), orderBy("puntos", "desc"));
-                    const querySnapshot = await getDocs(q);
-
-                    const lista = querySnapshot.docs.map(doc => ({
+                    setLoading(true);
+                    const snapshot = await getDocs(collection(db, "jugadores"));
+                    const lista = snapshot.docs.map(doc => ({
                         id: doc.id,
                         ...doc.data()
                     }));
 
-                    setJugadores(lista);
+                    // Agrupar por grupo
+                    const grupos = {};
+                    for (let i = 1; i <= 5; i++) {
+                        grupos[i] = lista
+                            .filter(j => j.grupo === i)
+                            .sort((a, b) => (b.puntos || 0) - (a.puntos || 0));
+                    }
+
+                    setJugadoresPorGrupo(grupos);
                 } catch (error) {
                     console.error("Error al cargar jugadores:", error);
                 } finally {
@@ -32,6 +38,7 @@ export default function RankingScreen({ navigation }) {
             cargarJugadores();
         }, [])
     );
+
     if (loading) {
         return (
             <View style={styles.centered}>
@@ -41,24 +48,33 @@ export default function RankingScreen({ navigation }) {
     }
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.titulo}>Ranking de Jugadores</Text>
-            <FlatList
-                data={jugadores}
-                keyExtractor={item => item.id}
-                renderItem={({ item, index }) => (
-                    <View style={styles.card}>
-                        <Text style={styles.nombre}>{index + 1}. {item.nombre}</Text>
-                        <Text style={styles.nivel}>Nivel: {item.nivel}</Text>
-                        <Text style={styles.puntos}>Puntos: {item.puntos}</Text>
-                    </View>
-                )}
-            />
+        <ScrollView style={styles.container}>
+            <Text style={styles.titulo}>Ranking por Grupos</Text>
+
+            {Object.entries(jugadoresPorGrupo).map(([grupo, jugadores]) => (
+                <View key={grupo} style={styles.grupoContainer}>
+                    <Text style={styles.grupoTitulo}>Grupo {grupo}</Text>
+                    {jugadores.length === 0 ? (
+                        <Text style={styles.sinJugadores}>Sin jugadores en este grupo</Text>
+                    ) : (
+                        jugadores.map((j, index) => (
+                            <View key={j.id} style={styles.card}>
+                                <Text style={styles.nombre}>
+                                    {index + 1}. {j.nombre}
+                                </Text>
+                                
+                                <Text style={styles.puntos}>Puntos: {j.puntos || 0}</Text>
+                            </View>
+                        ))
+                    )}
+                </View>
+            ))}
+
             <Button
                 title="Agregar nuevo jugador"
                 onPress={() => navigation.navigate('AgregarJugador')}
             />
-        </View>
+        </ScrollView>
     );
 }
 
@@ -73,6 +89,19 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginBottom: 20,
         textAlign: 'center'
+    },
+    grupoContainer: {
+        marginBottom: 30
+    },
+    grupoTitulo: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginBottom: 10,
+        color: '#007AFF'
+    },
+    sinJugadores: {
+        fontStyle: 'italic',
+        color: '#888'
     },
     card: {
         backgroundColor: '#f2f2f2',
